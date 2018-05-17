@@ -54,6 +54,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -127,12 +128,12 @@ int main(void)
 //  }
 //
 
-MX_GPIO_Init();
+  	MX_GPIO_Init();
 	volatile uint32_t *GPIOG_MODER = 0x0, *GPIOG_ODR = 0x0;
 
-	GPIOG_MODER = (uint32_t*)GPIOG_BASE;			//	Address of the GPIOG->MODER register
-	GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14); 	//	Address of the GPIOG->ODR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
-	*GPIOG_MODER = *GPIOG_MODER | 0x4000000; 		//	Sets MODER[27:26] = 0x1
+	GPIOG_MODER = (uint32_t*)GPIOG_BASE;							//	Address of the GPIOG->MODER register
+	GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14); 					//	Address of the GPIOG->ODR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
+	*GPIOG_MODER = *GPIOG_MODER | 0x4000000|(0x4000000<<2); 		//	Sets MODER[27:26] = 0x1
 
 
 	volatile uint32_t *GPIOA_MODER = 0x0, *GPIOA_IDR = 0x0;
@@ -140,17 +141,27 @@ MX_GPIO_Init();
 	GPIOA_IDR = (uint32_t*)(GPIOA_BASE + 0x10); 	//	Address of the GPIOA->IDR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
 	*GPIOA_MODER = *GPIOA_MODER & 0x0; 				//	Sets MODER[1:0] = 0x1
 
-	int cnt=0;
-	int val = 0;
 	while(1){
 
-		if (*GPIOA_IDR)
+		if (*GPIOA_IDR & 0x01){
 			*GPIOG_ODR = *GPIOG_ODR | 0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-		else
+			*GPIOG_ODR = *GPIOG_ODR & ~0x4000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
+
+		}else{
 			*GPIOG_ODR = *GPIOG_ODR & ~0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-		cnt++;
-		//val = *GPIOA_IDR;
+			*GPIOG_ODR = *GPIOG_ODR | 0x4000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
+		}
 	}
+
+//
+//	GPIO_TypeDef *PA = 0x48000000;
+//	GPIO_InitTypeDef *PA_Init;
+//
+//	PA_Init->Pin = GPIO_PIN_0;
+//	PA_Init->Mode = GPIO_MODE_INPUT;
+//
+//	HAL_GPIO_Init(PA, PA_Init);
+
 
 
 
@@ -162,17 +173,16 @@ MX_GPIO_Init();
   /* USER CODE END WHILE */
   /* USER CODE BEGIN 3 */
 
-  }
+
   /* USER CODE END 3 */
 
+  }
 }
 /**
 	@brief GPIO Configuration
 	@retval None
 */
-static void MX_GPIO_Init(){
-	__HAL_RCC_GPIOG_CLK_ENABLE();
-}
+
 
 /**
   * @brief System Clock Configuration
@@ -245,6 +255,12 @@ void _Error_Handler(char *file, int line)
   {
   }
   /* USER CODE END Error_Handler_Debug */
+}
+
+static void MX_GPIO_Init(){
+	__HAL_RCC_GPIOG_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+
 }
 
 #ifdef  USE_FULL_ASSERT
