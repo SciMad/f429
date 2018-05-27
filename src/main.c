@@ -53,7 +53,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -77,11 +76,13 @@ int main(void)
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+  GPIO_InitTypeDef GPIO_InitStuct;
+	HAL_Init();
 
 
   /* USER CODE BEGIN Init */
-
+	__HAL_RCC_GPIOG_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -94,64 +95,22 @@ int main(void)
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
+	GPIO_InitStuct.Pin = GPIO_PIN_0;
+	GPIO_InitStuct.Mode = GPIO_MODE_IT_FALLING|GPIO_MODE_IT_RISING;
+	GPIO_InitStuct.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStuct);
 
-//	--------------------------------------------------------------------------------------------------------------------------
-//	To send digital (HIGH / LOW) to a particular pin of particular port using ODR bits
-//	--------------------------------------------------------------------------------------------------------------------------
-//	volatile uint32_t *GPIOG_MODER = 0x0, *GPIOG_ODR = 0x0;
-//	MX_GPIO_Init();
-//	GPIOG_MODER = (uint32_t*)GPIOG_BASE;			//	Address of the GPIOG->MODER register
-//	GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14); 	//	Address of the GPIOG->ODR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
-//	*GPIOG_MODER = *GPIOG_MODER | 0x4000000; 		//	Sets MODER[27:26] = 0x1
-//	while(1){
-//		*GPIOG_ODR = *GPIOG_ODR | 0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-//		HAL_Delay(500);
-//		*GPIOG_ODR = *GPIOG_ODR & ~0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-//		HAL_Delay(500);
-//	}
+	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
+	GPIO_InitStuct.Pin = GPIO_PIN_13;
+	GPIO_InitStuct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStuct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOG, &GPIO_InitStuct);
 
-
-//	--------------------------------------------------------------------------------------------------------------------------
-//	This is to toggle digital data in a pin 13 of port G using HAL Toggle function
-//	--------------------------------------------------------------------------------------------------------------------------
-//  volatile uint32_t *GPIOG_MODER = 0x0, GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14);
-//  MX_GPIO_Init();
-//  GPIOG_MODER = (uint32_t*)GPIOG_BASE;			//	Address of the GPIOG->MODER register
-//	GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14); 	//	Address of the GPIOG->ODR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
-//  *GPIOG_MODER = *GPIOG_MODER | 0x4000000; 		//	Sets MODER[2n+1:2n] = 0x1
-//
-//  while(1) {
-//	  HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_13);
-//	  HAL_Delay(500);
-//  }
-//
-
-MX_GPIO_Init();
-	volatile uint32_t *GPIOG_MODER = 0x0, *GPIOG_ODR = 0x0;
-
-	GPIOG_MODER = (uint32_t*)GPIOG_BASE;			//	Address of the GPIOG->MODER register
-	GPIOG_ODR = (uint32_t*)(GPIOG_BASE + 0x14); 	//	Address of the GPIOG->ODR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
-	*GPIOG_MODER = *GPIOG_MODER | 0x4000000; 		//	Sets MODER[27:26] = 0x1
-
-
-	volatile uint32_t *GPIOA_MODER = 0x0, *GPIOA_IDR = 0x0;
-	GPIOA_MODER = (uint32_t*)GPIOA_BASE;			//	Address of the GPIOA->MODER register
-	GPIOA_IDR = (uint32_t*)(GPIOA_BASE + 0x10); 	//	Address of the GPIOA->IDR register. This ensure that the peripheral is enabled and connected to the AHB1 bus
-	*GPIOA_MODER = *GPIOA_MODER & 0x0; 				//	Sets MODER[1:0] = 0x1
-
-	int cnt=0;
-	int val = 0;
-	while(1){
-
-		if (*GPIOA_IDR)
-			*GPIOG_ODR = *GPIOG_ODR | 0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-		else
-			*GPIOG_ODR = *GPIOG_ODR & ~0x2000;				// To turn off *GPIOG_ODR = *GPIOG_ODR & ~ 0x2000;
-		cnt++;
-		//val = *GPIOA_IDR;
-	}
-
+	GPIO_InitStuct.Pin = GPIO_PIN_14;
+	GPIO_InitStuct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStuct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOG, &GPIO_InitStuct);
 
 
   /* Infinite loop */
@@ -159,6 +118,8 @@ MX_GPIO_Init();
   while (1)
   {
 
+	  HAL_Delay(1000);
+	  HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_13);
   /* USER CODE END WHILE */
   /* USER CODE BEGIN 3 */
 
@@ -170,8 +131,9 @@ MX_GPIO_Init();
 	@brief GPIO Configuration
 	@retval None
 */
-static void MX_GPIO_Init(){
-	__HAL_RCC_GPIOG_CLK_ENABLE();
+void EXTI0_IRQHandler(void){
+	HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_14);
+	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
 }
 
 /**
